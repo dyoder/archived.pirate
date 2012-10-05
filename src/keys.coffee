@@ -24,20 +24,17 @@ Keys =
       bytes.push (x % 256)
       x = Math.floor(x/256)
     bytes.push x
-    
+    # Add some padding to ensure uniform keys, which helps guarantee uniqueness.
     while bytes.length < size
       bytes.push 0
-    new Buffer bytes  
+    new Buffer bytes.reverse()
     
   # This function is primarily here to make it easy to test the numberToBytes
   # function. The Buffer object works just like an array so you can pass in
   # either a Buffer instance or an array here.  
   bytesToNumber: (bytes) ->   
     x = 0
-    _bytes = []
     for byte in bytes
-      _bytes.unshift byte
-    for byte in _bytes
       x *= 256
       x += byte
     x
