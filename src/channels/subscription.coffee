@@ -1,19 +1,19 @@
-class Queue
+class Subscription
   
   constructor: (configuration) ->
     {@channel,@transport,@replyTo} = configuration
-    @channel = "queue.#{@name}"
+    @channel = "subscription.#{@channel}"
     
-  enqueue: (content) ->
-    @transport.send
+  publish: (content) ->
+    @transport.publish
       channel: @channel
       replyTo: @replyTo
       content: content
 
-  dequeue: (callback) ->
-    @transport.receive @channel, (error, message) ->
+  subscribe: (callback) ->
+    @transport.subscribe @channel, (error, message) ->
       callback(error, message)
       
   end: -> @transport.end()
     
-module.exports = Queue
+module.exports = Subscription
