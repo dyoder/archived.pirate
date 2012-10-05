@@ -1,4 +1,4 @@
-class Simplex
+class Messenger
   
   constructor: (configuration) ->
     {@channel,@transport,@replyTo} = configuration
@@ -20,4 +20,4 @@ class Simplex
       
   end: -> @transport.end()
     
-module.exports = Simplex
+module.exports = Messenger

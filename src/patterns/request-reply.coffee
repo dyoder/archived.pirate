@@ -1,4 +1,4 @@
-Simplex = require "../channels/simplex"
+Messenger = require "../channels/messenger"
 
 class RequestReply
   
@@ -6,11 +6,11 @@ class RequestReply
 
     {@channel,@transport} = configuration
 
-    @from = new Simplex
+    @from = new Messenger
       channel: "reply.#{@channel}"
       transport: @transport
       
-    @to = new Simplex
+    @to = new Messenger
       channel: "request.#{@channel}"
       transport: @transport
       
