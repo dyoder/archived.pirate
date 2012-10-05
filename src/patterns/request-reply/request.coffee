@@ -1,20 +1,18 @@
 Messenger = require "../../channels/messenger"
-Queue = require "../../channels/queue"
 
-class Dispatcher
+class Request
   
   constructor: (configuration) ->
 
-    {@name,@channel,@transport} = configuration
+    {@channel,@transport} = configuration
 
     @_from = new Messenger
-      channel: "private.#{@name}"
+      channel: "reply.#{@channel}"
       transport: @transport
       
-    @_to = new Queue
+    @_to = new Messenger
       channel: "request.#{@channel}"
       transport: @transport
-      replyTo: "private.#{@name}"
       
     @_counter = 0
     @_callbacks = {}
@@ -24,22 +22,22 @@ class Dispatcher
       message.id = @_counter++
       @_registerCallback message.id, callback
       @_listen()
-    @_to.enqueue message
-    
-  end: -> 
-    @_from.end()
-    @_to.end()
-
-  _listen: ->
-    @_from.receive (error,reply) =>
-      @_process reply
-
-  _process: (message) ->
-    callback = @_callbacks[message.id]
-    @_callbacks[message.id] = null
-    callback(null,message)
+    @_to.send message
 
   _registerCallback: (id,callback) ->
     @_callbacks[id] = callback
     
-module.exports = Dispatcher
+  _process: (message) ->
+    callback = @_callbacks[message.id]
+    @_callbacks[message.id] = null
+    callback(null,message)
+    
+  end: -> 
+    @_from.end()
+    @_to.end()
+  
+  _listen: ->
+    @_from.receive (error,reply) =>
+      @_process reply
+    
+module.exports = Request

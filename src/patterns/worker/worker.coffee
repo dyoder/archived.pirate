@@ -7,7 +7,7 @@ class Worker
   
     {@channel,@transport} = configuration
   
-    @from = new Queue
+    @_from = new Queue
       channel: "request.#{@channel}"
       transport: @transport
 
@@ -17,17 +17,16 @@ class Worker
  
   accept: (callback) ->
     @_pending++
-    @from.dequeue (error,message) =>
+    @_from.dequeue (error,message) =>
       @_getMessenger(message.replyTo).send callback error,message
-      if --@_pending is 0 and @_finish is true
-        @_end()
+      @_end() if --@_pending is 0 and @_finish is true
 
   end: ->
     @_finish = true
     @_end() if @_pending is 0
 
   _end: ->
-    @from.end()
+    @_from.end()
     for channel,messenger of @_messengers
       messenger.end()
     @_messengers = []
