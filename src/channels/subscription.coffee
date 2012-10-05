@@ -11,8 +11,10 @@ class Subscription
       content: content
 
   subscribe: (callback) ->
-    @transport.subscribe @channel, (error, message) ->
+    @unsubscribe = @transport.subscribe @channel, (error, message) ->
       callback(error, message)
+      
+  unsubscribe: -> 
       
   end: -> @transport.end()
     

@@ -20,11 +20,17 @@ class Transport
         @clients.release client
     
   subscribe: (channel,callback) ->
+    _client = null
     @clients.acquire (error,client) =>
+      _client = client
       client.subscribe channel
       client.on "message", (channel,json) =>
         message = JSON.parse json
-        callback message
+        callback null, message
+    # we return the unsubscribe function
+    =>
+      _client.unsubscribe()
+      @clients.release _client
         
   send: (message) ->
     {channel} = message
