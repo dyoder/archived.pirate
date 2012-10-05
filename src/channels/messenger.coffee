@@ -2,7 +2,7 @@ class Messenger
   
   constructor: (configuration) ->
     {@channel,@transport,@replyTo} = configuration
-    @channel = "simplex.#{@channel}"
+    @channel = "messenger.#{@channel}"
     
   send: (content) ->
     @transport.send

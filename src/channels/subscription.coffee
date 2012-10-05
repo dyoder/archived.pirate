@@ -11,6 +11,10 @@ class Subscription
       content: content
 
   subscribe: (callback) ->
+    # TODO: this is probably a bit too clever for our own good ...
+    # We can just set _unsubscribe here and then conditionally call it from the
+    # "real" unsubscribe method instead of replacing it. That way we can also
+    # reset it to null when we're done.
     @unsubscribe = @transport.subscribe @channel, (error, message) ->
       callback(error, message)
       
