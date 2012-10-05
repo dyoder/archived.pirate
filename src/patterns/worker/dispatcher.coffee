@@ -1,4 +1,5 @@
 Messenger = require "../../channels/messenger"
+Queue = require "../../channels/queue"
 
 class Dispatcher
   
@@ -10,7 +11,7 @@ class Dispatcher
       channel: "private.#{@name}"
       transport: @transport
       
-    @to = new Messenger
+    @to = new Queue
       channel: "request.#{@channel}"
       transport: @transport
       replyTo: "private.#{@name}"
@@ -23,7 +24,7 @@ class Dispatcher
       message.id = @_counter++
       @_registerCallback message.id, callback
       @_listen()
-    @to.send message
+    @to.enqueue message
     
   end: -> 
     @from.end()

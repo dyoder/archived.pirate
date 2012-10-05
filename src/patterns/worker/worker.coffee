@@ -1,4 +1,5 @@
 Messenger = require "../../channels/messenger"
+Queue = require "../../channels/queue"
 
 class Worker
   
@@ -6,10 +7,9 @@ class Worker
   
     {@channel,@transport} = configuration
   
-    @from = new Messenger
+    @from = new Queue
       channel: "request.#{@channel}"
       transport: @transport
-      replyTo: "private.#{@name}"
 
     @_messengers = {}
     @_pending = 0
@@ -17,7 +17,7 @@ class Worker
  
   accept: (callback) ->
     @_pending++
-    @from.receive (error,message) =>
+    @from.dequeue (error,message) =>
       @_getMessenger(message.replyTo).send callback error,message
       if --@_pending is 0 and @_finish is true
         @_end()
