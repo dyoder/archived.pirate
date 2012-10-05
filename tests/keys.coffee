@@ -16,6 +16,8 @@ console.log Keys.bytesToNumber bytes
 z = Keys.numberToKey Date.now()
 console.log z
 
-z = (Keys.bufferToKey (Buffer.concat [Keys.randomBytes(16), (Keys.numberToBytes Date.now())]))
+z = Keys.buffersToKey Keys.randomBytes(16), Keys.numberToBytes Date.now()
 console.log z
+
+# Double-check the encoding ...
 console.log (new Buffer z, 'base64').toString('base64')

@@ -5,7 +5,8 @@
   "main": "lib/pirate.coffee",
   "dependencies": {
     "redis": "0.8.x",
-    "generic-pool": "2.0.x"
+    "generic-pool": "2.0.x",
+    "winston": "0.6.x"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

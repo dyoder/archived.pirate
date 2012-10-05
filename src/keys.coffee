@@ -40,6 +40,8 @@ Keys =
     x
         
   bufferToKey: (buffer) -> buffer.toString('base64')
+  
+  buffersToKey: (buffers...) -> @bufferToKey Buffer.concat buffers
 
 
 module.exports = Keys
