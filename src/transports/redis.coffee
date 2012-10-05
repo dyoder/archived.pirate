@@ -13,6 +13,28 @@ class Transport
         client.on "connect", -> callback null, client
       destroy: (client) -> client.quit()
   
+  send: (message) ->
+    {channel} = message
+    @clients.acquire (error,client) =>
+      # TODO: Error handling is pending a overarching error-handling strategy
+      client.lpush "queue.#{channel}", JSON.stringify(message), (error,result) =>
+        @clients.release client
+
+  receive: (channel,callback) ->
+    @clients.acquire (error,client) =>
+      client.brpop "queue.#{channel}", 0, (error,results) =>
+
+        @clients.release client
+
+        # process the results
+        [key,json] = results if results
+        message = JSON.parse(json)
+        callback(error,message)
+
+  enqueue: (message) -> @send message
+  
+  dequeue: (channel,callback) -> @receive channel, callback
+
   publish: (message) ->
     {channel} = message
     @clients.acquire (error,client) =>
@@ -32,24 +54,6 @@ class Transport
       _client.unsubscribe()
       @clients.release _client
         
-  send: (message) ->
-    {channel} = message
-    @clients.acquire (error,client) =>
-      # TODO: Error handling is pending a overarching error-handling strategy
-      client.lpush "queue.#{channel}", JSON.stringify(message), (error,result) =>
-        @clients.release client
-    
-  receive: (channel,callback) ->
-    @clients.acquire (error,client) =>
-      client.brpop "queue.#{channel}", 0, (error,results) =>
-
-        @clients.release client
-
-        # process the results
-        [key,json] = results if results
-        message = JSON.parse(json)
-        callback(error,message)
-    
   end: -> 
     @clients.drain => @clients.destroyAllNow()
     

@@ -1,7 +1,7 @@
-Messenger = require "../../src/messenger"
+Queue = require "../../src/channels/queue"
 Transport = require "../../src/transports/redis"
 
-messenger = new Messenger "dispatcher", new Transport host: "localhost", port: 6379
-queue = messenger.queue "greetings"
+transport = new Transport host: "localhost", port: 6379
+queue = new Queue channel: "greetings", transport: transport
 queue.enqueue "Hello!"
 queue.end()

@@ -5,13 +5,13 @@ class Queue
     @channel = "queue.#{@name}"
     
   enqueue: (content) ->
-    @transport.send
+    @transport.enqueue
       channel: @channel
       replyTo: @replyTo
       content: content
 
   dequeue: (callback) ->
-    @transport.receive @channel, (error, message) ->
+    @transport.dequeue @channel, (error, message) ->
       callback(error, message)
       
   end: -> @transport.end()

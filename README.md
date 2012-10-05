@@ -12,7 +12,7 @@ Pirate also provides (or will provide) a catalog of common messaging patterns on
 
 Pirate is definitely a work in progress. 
 
-Presently, one transport (Redis, doing a nice job of pretending to be a DHT) and two messaging patterns (queues and pub-sub) are supported.
+Presently, one transport (Redis, doing a nice job of pretending to be a DHT), two messaging channels (queues and pub-sub), and one messaging pattern (request-reply) are supported.
 
 ## Installation
 
