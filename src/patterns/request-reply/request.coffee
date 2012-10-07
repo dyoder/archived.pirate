@@ -38,6 +38,8 @@ class Request
   
   _listen: ->
     @_from.receive (error,reply) =>
+      # TODO: what do i do with an error here?
+      # See ticket #19
       @_process reply
     
 module.exports = Request

@@ -32,6 +32,8 @@ class Dispatcher
 
   _listen: ->
     @_from.receive (error,reply) =>
+      # TODO: what do i do with an error here?
+      # See issues #19, #20.
       @_process reply
 
   _process: (message) ->
