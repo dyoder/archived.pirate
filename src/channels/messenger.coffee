@@ -4,19 +4,15 @@ class Messenger
     {@channel,@transport,@replyTo} = configuration
     @channel = "messenger.#{@channel}"
     
-  send: (content) ->
+  send: (content,callback) ->
     @transport.send
       channel: @channel
       replyTo: @replyTo
       content: content
+      callback
 
   receive: (callback) ->
-    @isListening = true
-    @transport.receive @channel, (error, message) ->
-      @isListening = false
-      callback(error, message)
-      
-  isListening: false
+    @transport.receive @channel, callback
       
   end: -> @transport.end()
     

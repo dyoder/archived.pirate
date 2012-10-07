@@ -1,23 +1,26 @@
 Keys = require "../src/keys"
+testify = require("./testify")
 
-console.log Keys.randomKey 16
+testify "Key generation", (test) ->
 
-# Make sure the numberToBytes function works correctly
-x = Date.now()
-console.log x
-bytes = Keys.numberToBytes x
-console.log Keys.bytesToNumber bytes
+  # Make sure randomKey returns a string ...
+  test.assert.ok (Keys.randomKey 16).charAt
 
-x = 17
-console.log x
-bytes = Keys.numberToBytes x
-console.log Keys.bytesToNumber bytes
+  # Make sure the numberToBytes function works ...
+  x = Date.now()
+  test.assert.equal (Keys.bytesToNumber Keys.numberToBytes x), x
+  x = 17
+  test.assert.equal (Keys.bytesToNumber Keys.numberToBytes x), x
 
-z = Keys.numberToKey Date.now()
-console.log z
+  # Make sure numberToKey returns a string ...
+  test.assert.ok (Keys.numberToKey Date.now()).charAt
+  
+  z = Keys.buffersToKey Keys.randomBytes(16), Keys.numberToBytes Date.now()
 
-z = Keys.buffersToKey Keys.randomBytes(16), Keys.numberToBytes Date.now()
-console.log z
+  # Make sure we can combine byte arrays
+  test.assert.ok z.charAt
 
-# Double-check the encoding ...
-console.log (new Buffer z, 'base64').toString('base64')
+  # Double-check the encoding ...
+  test.assert.equal z, (new Buffer z, 'base64').toString('base64')
+  
+  test.done()

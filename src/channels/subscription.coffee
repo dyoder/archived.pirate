@@ -4,21 +4,21 @@ class Subscription
     {@channel,@transport,@replyTo} = configuration
     @channel = "subscription.#{@channel}"
     
-  publish: (content) ->
+  publish: (content,callback) ->
     @transport.publish
       channel: @channel
       replyTo: @replyTo
       content: content
+      callback
 
   subscribe: (callback) ->
-    # TODO: this is probably a bit too clever for our own good ...
-    # We can just set _unsubscribe here and then conditionally call it from the
-    # "real" unsubscribe method instead of replacing it. That way we can also
-    # reset it to null when we're done.
-    @unsubscribe = @transport.subscribe @channel, (error, message) ->
+    @_unsubscribe = @transport.subscribe @channel, (error, message) ->
       callback(error, message)
       
   unsubscribe: -> 
+    if @_unsubscribe
+      @_unsubscribe()
+      @_unsubscribe = null
       
   end: -> @transport.end()
     

@@ -35,16 +35,15 @@ class Transport
     @clients.acquire (error,client) =>
       if error then return callback(error)
       client.brpop "queue.#{channel}", 0, (error,results) =>
-
         @clients.release client
-
         # process the results
         if error then return callback error
         try
           [key,json] = results
           callback null, JSON.parse(json)
         catch error
-          callback new Error("Transport receieve method returned unexpected result")
+          callback new Error("Transport receieve method returned unexpected
+            result ('#{error.name}: #{error.message})'")
 
   enqueue: (message) -> @send message
   
