@@ -8,6 +8,7 @@ class Messenger extends Connector
     @channel = "messenger.#{@channel}"
     
   send: (content,callback) ->
+    @logger.info "Sending message: #{content[0..15]} ..."
     @transport.send
       channel: @channel
       replyTo: @replyTo

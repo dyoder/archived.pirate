@@ -1,16 +1,15 @@
 redis = require "redis"
 {Pool} = require "generic-pool"
 
-_default_logger = () ->
-  {Logger,transports} = require "winston"
-  new Logger
-    transports: [ new transports.Console level: "error" ]
+_default_logger = (level) ->
+  Logger = require "../logger"
+  new Logger level: level
       
 class Transport
   
   constructor: (configuration) ->
-    {@logger} = configuration 
-    @logger ?= _default_logger()
+    {@logger,debug} = configuration 
+    @logger ?= _default_logger(if debug? then "info" else "error")
     @clients = Pool 
       name: "redis-transport", max: 10
       create: (callback) => 
