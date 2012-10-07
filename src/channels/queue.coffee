@@ -1,8 +1,10 @@
-class Queue
+Connector = require "../connector"
+
+class Queue extends Connector
   
   constructor: (configuration) ->
-    {@channel,@transport,@replyTo,@logger} = configuration
-    @logger ?= @transport.logger
+    super configuration
+    {@channel,@replyTo} = configuration
     @channel = "queue.#{@name}"
     
   enqueue: (content,callback) ->

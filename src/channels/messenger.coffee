@@ -1,8 +1,10 @@
-class Messenger
+Connector = require "../connector"
+
+class Messenger extends Connector
   
   constructor: (configuration) ->
-    {@channel,@transport,@replyTo,@logger} = configuration
-    @logger ?= @transport.logger
+    super configuration
+    {@channel,@replyTo} = configuration
     @channel = "messenger.#{@channel}"
     
   send: (content,callback) ->

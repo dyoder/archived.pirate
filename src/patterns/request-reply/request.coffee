@@ -1,11 +1,12 @@
 Messenger = require "../../channels/messenger"
+Connector = require "../../connector"
 
-class Request
+class Request extends Connector
   
   constructor: (configuration) ->
 
-    {@channel,@transport,@logger} = configuration
-    @logger ?= @transport.logger
+    super configuration
+    {@channel} = configuration
 
     @_from = new Messenger
       channel: "reply.#{@channel}"

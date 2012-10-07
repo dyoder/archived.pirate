@@ -1,8 +1,10 @@
-class Subscription
+Connector = require "../connector"
+
+class Subscription extends Connector
   
   constructor: (configuration) ->
-    {@channel,@transport,@replyTo,@logger} = configuration
-    @logger ?= @transport.logger
+    super configuration
+    {@channel,@replyTo} = configuration
     @channel = "subscription.#{@channel}"
     
   publish: (content,callback) ->
