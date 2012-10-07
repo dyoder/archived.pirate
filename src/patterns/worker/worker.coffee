@@ -5,7 +5,8 @@ class Worker
   
   constructor: (configuration) ->
   
-    {@channel,@transport} = configuration
+    {@channel,@transport,@logger} = configuration
+    @logger ?= @transport.logger
   
     @_from = new Queue
       channel: "request.#{@channel}"

@@ -1,7 +1,8 @@
 class Messenger
   
   constructor: (configuration) ->
-    {@channel,@transport,@replyTo} = configuration
+    {@channel,@transport,@replyTo,@logger} = configuration
+    @logger ?= @transport.logger
     @channel = "messenger.#{@channel}"
     
   send: (content,callback) ->

@@ -1,7 +1,8 @@
 class Queue
   
   constructor: (configuration) ->
-    {@channel,@transport,@replyTo} = configuration
+    {@channel,@transport,@replyTo,@logger} = configuration
+    @logger ?= @transport.logger
     @channel = "queue.#{@name}"
     
   enqueue: (content,callback) ->

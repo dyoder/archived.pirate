@@ -5,7 +5,8 @@ class Dispatcher
   
   constructor: (configuration) ->
 
-    {@name,@channel,@transport} = configuration
+    {@name,@channel,@transport,@logger} = configuration
+    @logger ?= @transport.logger
 
     @_from = new Messenger
       channel: "private.#{@name}"

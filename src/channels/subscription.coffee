@@ -1,7 +1,8 @@
 class Subscription
   
   constructor: (configuration) ->
-    {@channel,@transport,@replyTo} = configuration
+    {@channel,@transport,@replyTo,@logger} = configuration
+    @logger ?= @transport.logger
     @channel = "subscription.#{@channel}"
     
   publish: (content,callback) ->

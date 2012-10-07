@@ -4,7 +4,8 @@ class Reply
   
   constructor: (configuration) ->
 
-    {@channel,@transport} = configuration
+    {@channel,@transport,@logger} = configuration
+    @logger ?= @transport.logger
 
     @_to = new Messenger
       channel: "reply.#{@channel}"
