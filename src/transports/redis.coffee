@@ -21,56 +21,90 @@ class Transport
       log: (string,level) => @logger[level](string)
   
   send: (message,callback) ->
-    @logger.info "Sending message: #{message.content[0..15]} ..."
+    action = "Send message: #{message.content[0..15]}"
+    @logger.info "#{action} ..."
     {channel} = message
-    callback = (=> @log_error) unless callback
     @clients.acquire (error,client) =>
-      if error then return callback(error)
-      client.lpush "queue.#{channel}", JSON.stringify(message), (error,result) =>
-        @clients.release client
-        callback error, result
+      if error
+        @logger.error "#{action} - #{error.name}: #{error.message}"
+      else
+        client.lpush "queue.#{channel}", JSON.stringify(message), (error,result) =>
+          @clients.release client
+          if error
+            @logger.error "#{action} - #{error.name}: #{error.message}"
+          else
+            @logger.info "#{action} successful"
+
+          callback error, result if callback
 
   receive: (channel,callback) ->
+    action = "Receive message on channel: #{channel}"
+    @logger.info "#{action} ..."
     @clients.acquire (error,client) =>
-      if error then return callback(error)
-      client.brpop "queue.#{channel}", 0, (error,results) =>
-        @clients.release client
-        # process the results
-        if error then return callback error
-        try
-          [key,json] = results
-          callback null, JSON.parse(json)
-        catch error
-          callback new Error("Transport receieve method returned unexpected
-            result ('#{error.name}: #{error.message})'")
+      if error
+        @logger.error "#{action} - #{error.name}: #{error.message}"
+      else
+        client.brpop "queue.#{channel}", 0, (error,results) =>
+          @clients.release client
+          if error
+            @logger.error "#{action} - #{error.name}: #{error.message}"
+          else
+            @logger.info "#{action} successful"
+
+          try
+            [key,json] = results
+            callback null, JSON.parse(json)
+          catch error
+            error = new Error("Transport receieve method returned unexpected
+              result ('#{error.name}: #{error.message})'")
+            @logger.error "#{action} - #{error.name}: #{error.message}"
+            callback error
 
   enqueue: (message) -> @send message
   
   dequeue: (channel,callback) -> @receive channel, callback
 
   publish: (message,callback) ->
+    action = "Publish message: #{message.content[0..15]}"
     {channel} = message
-    callback = (=> @log_error) unless callback
+    @logger.info "#{action} ..."
     @clients.acquire (error,client) =>
-      if error then return callback(error)
-      client.publish channel, JSON.stringify(message),(error) =>
-        @clients.release client
-        if error then return callback error
+      if error
+        @logger.error "#{action} - #{error.name}: #{error.message}"
+      else
+        client.publish channel, JSON.stringify(message), (error) =>
+          @clients.release client
+          if error
+            @logger.error "#{action} - #{error.name}: #{error.message}"
+          else
+            @logger.info "#{action} successful"
         
     
   subscribe: (channel,callback) ->
+    action = "Subscribe to channel: #{channel}"
     _client = null
+    @logger.info "#{action} ..."
     @clients.acquire (error,client) =>
-      if error then return callback(error)
       _client = client
-      client.subscribe channel
-      client.on "message", (channel,json) =>
-        message = JSON.parse json
-        callback null, message
+      if error
+        @logger.error "#{action} - #{error.name}: #{error.message}"
+      else
+        client.subscribe channel
+        client.on "message", (channel,json) =>
+          try
+            callback null, JSON.parse(json)
+          catch error
+            error = new Error("""
+              Transport subscribe method returned unexpected result ('#{error.name}: #{error.message}')
+            """)
+            @logger.error "#{action} - #{error.name}: #{error.message}"
+            callback error
+          
     # we return the unsubscribe function
-    =>
-      _client.unsubscribe()
-      @clients.release _client
+    if _client?
+      =>
+        _client.unsubscribe()
+        @clients.release _client
         
   end: -> 
     @clients.drain => @clients.destroyAllNow()

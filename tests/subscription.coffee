@@ -10,6 +10,7 @@ testify "Publish and subscribe", (test) ->
     
     transport = new Transport host: "localhost", port: 6379
     subscription = new Subscription channel: "greetings", transport: transport
+    transport.logger.level = "debug"
 
     subscription.publish message
     
@@ -21,8 +22,11 @@ testify "Publish and subscribe", (test) ->
     
     transport = new Transport host: "localhost", port: 6379
     subscription = new Subscription channel: "greetings", transport: transport
+    transport.logger.level = "debug"
 
-    subscription.subscribe callback
+    subscription.subscribe (error,message) ->
+      subscription.unsubscribe()
+      callback error, message
     
     subscription.end()
 
@@ -30,7 +34,6 @@ testify "Publish and subscribe", (test) ->
 
   subscribe (error,message) ->
     test.assert.equal "Hello!", message?.content    
-    subscription.unsubscribe()
     test.done()
 
   # Give it a second to make sure the subscribe is set up
