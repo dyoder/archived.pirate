@@ -31,12 +31,13 @@ testify "Publish and subscribe", (test) ->
     subscription.end()
 
 
-
+  id = setTimeout (-> test.fail "Never got publish" ; process.exit() ), 1000
+  
   subscribe (error,message) ->
+    clearTimeout(id)
     test.assert.equal "Hello!", message?.content    
     test.done()
 
   # Give it a second to make sure the subscribe is set up
   setTimeout (-> publish "Hello!"), 100
   
-  setTimeout (-> test.fail "Never got publish" ; process.exit() ), 1000

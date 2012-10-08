@@ -93,6 +93,7 @@ class Transport
         client.on "message", (channel,json) =>
           try
             callback null, JSON.parse(json)
+            @logger.info "#{action} successful"
           catch error
             error = new Error("""
               Transport subscribe method returned unexpected result ('#{error.name}: #{error.message}')
@@ -101,8 +102,9 @@ class Transport
             callback error
           
     # we return the unsubscribe function
-    if _client?
-      =>
+    =>
+      if _client?
+        @logger.info "Unsubscribing ..."
         _client.unsubscribe()
         @clients.release _client
         
