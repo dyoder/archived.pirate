@@ -7,12 +7,8 @@ class Subscription extends Connector
     {@channel,@replyTo} = configuration
     @channel = "subscription.#{@channel}"
     
-  publish: (content,callback) ->
-    @transport.publish
-      channel: @channel
-      replyTo: @replyTo
-      content: content
-      callback
+  publish: (message,callback) ->
+    @transport.publish (@enrich message), callback
 
   subscribe: (callback) ->
     @_unsubscribe = @transport.subscribe @channel, (error, message) ->
@@ -23,6 +19,4 @@ class Subscription extends Connector
       @_unsubscribe()
       @_unsubscribe = null
       
-  end: -> @transport.end()
-    
 module.exports = Subscription

@@ -1,15 +1,15 @@
 redis = require "redis"
 {Pool} = require "generic-pool"
 
-_default_logger = (level) ->
+_default_logger = ->
   Logger = require "../logger"
-  new Logger level: level
+  new Logger level: "error"
       
 class Transport
   
   constructor: (configuration) ->
-    {@logger,debug} = configuration 
-    @logger ?= _default_logger(if debug? then "info" else "error")
+    {@logger,@timeout,debug} = configuration 
+    @logger ?= _default_logger()
     @clients = Pool 
       name: "redis-transport", max: 10
       create: (callback) => 
@@ -53,12 +53,13 @@ class Transport
 
           try
             [key,json] = results
-            callback null, JSON.parse(json)
+            message = JSON.parse(json)
           catch error
-            error = new Error("Transport receieve method returned unexpected
-              result ('#{error.name}: #{error.message})'")
+            error = @unexpected "receive", error
             @logger.error "#{action} - #{error.name}: #{error.message}"
             callback error
+
+          callback null, message
 
   enqueue: (message) -> @send message
   
@@ -95,9 +96,7 @@ class Transport
             callback null, JSON.parse(json)
             @logger.info "#{action} successful"
           catch error
-            error = new Error("""
-              Transport subscribe method returned unexpected result ('#{error.name}: #{error.message}')
-            """)
+            error = @_unexpected "subscribe", error
             @logger.error "#{action} - #{error.name}: #{error.message}"
             callback error
           
@@ -108,10 +107,14 @@ class Transport
         _client.unsubscribe()
         @clients.release _client
         
+        
+  unexpected: (method,error) ->
+    new Error("""
+      Transport #{method} method returned unexpected result ('#{error.name}: #{error.message}')
+    """)
+    
   end: -> 
     @clients.drain => @clients.destroyAllNow()
   
-  log_error: (error) ->
-    @logger.error "#{error.name}: #{error.message}"
-    
+
 module.exports = Transport

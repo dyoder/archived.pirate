@@ -1,33 +1,23 @@
-testify = require("./testify")
+testify = require "./testify"
+{config,make} = require "./helpers"
+Subscription = require "../src/channels/subscription"
 
 testify "Publish and subscribe", (test) ->
 
-  Subscription = require "../src/channels/subscription"
-  Transport = require "../src/transports/redis"
-
-
   publish = (message) ->
     
-    transport = new Transport host: "localhost", port: 6379
-    subscription = new Subscription channel: "greetings", transport: transport
-    transport.logger.level = "debug"
-
+    subscription = make Subscription
     subscription.publish message
-    
     subscription.end()
 
 
 
   subscribe = (callback) ->
     
-    transport = new Transport host: "localhost", port: 6379
-    subscription = new Subscription channel: "greetings", transport: transport
-    transport.logger.level = "debug"
-
+    subscription = make Subscription
     subscription.subscribe (error,message) ->
       subscription.unsubscribe()
       callback error, message
-    
     subscription.end()
 
 

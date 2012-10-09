@@ -7,16 +7,10 @@ class Queue extends Connector
     {@channel,@replyTo} = configuration
     @channel = "queue.#{@name}"
     
-  enqueue: (content,callback) ->
-    @transport.enqueue
-      channel: @channel
-      replyTo: @replyTo
-      content: content
-      callback
+  enqueue: (message,callback) ->
+    @transport.enqueue (@enrich message), callback
 
   dequeue: (callback) ->
     @transport.dequeue @channel, callback
-      
-  end: -> @transport.end()
     
 module.exports = Queue

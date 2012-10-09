@@ -7,16 +7,10 @@ class Messenger extends Connector
     {@channel,@replyTo} = configuration
     @channel = "messenger.#{@channel}"
     
-  send: (content,callback) ->
-    @transport.send
-      channel: @channel
-      replyTo: @replyTo
-      content: content
-      callback
+  send: (message,callback) ->
+    @transport.send (@enrich message), callback
 
   receive: (callback) ->
     @transport.receive @channel, callback
       
-  end: -> @transport.end()
-    
 module.exports = Messenger

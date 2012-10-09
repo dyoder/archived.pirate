@@ -6,7 +6,7 @@
   "dependencies": {
     "redis": "0.8.x",
     "generic-pool": "2.0.x",
-    "winston": "0.6.x"
+    "sprintf": "0.1.1"
   },
   "devDependencies": {
     "colors": "6.0.x"

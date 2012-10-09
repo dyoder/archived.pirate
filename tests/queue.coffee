@@ -1,26 +1,20 @@
-testify = require("./testify")
+testify = require "./testify"
+{config,make} = require "./helpers"
+Queue = require "../src/channels/queue"
+  
 
 testify "Queue and dequeue a request", (test) ->
   
-  Queue = require "../src/channels/queue"
-  Transport = require "../src/transports/redis"
-
   enqueue = (message) ->
 
-    transport = new Transport host: "localhost", port: 6379
-    queue = new Queue channel: "greetings", transport: transport
-
+    queue = make Queue
     queue.enqueue message
-
     queue.end()
   
   dequeue = (callback) ->
 
-    transport = new Transport host: "localhost", port: 6379
-    queue = new Queue channel: "greetings", transport: transport
-  
+    queue = make Queue
     queue.dequeue callback
-  
     queue.end()
   
   enqueue "Hello!"

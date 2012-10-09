@@ -1,3 +1,5 @@
+{sprintf} = require "sprintf"
+
 w = (string) -> string.split " "
 
 class Logger
@@ -10,12 +12,17 @@ class Logger
     "verbose": w ""
     
   constructor: (configuration) ->
-    {@level,@stream} = configuration
+    {@level,@stream,@name} = configuration
+    @name ?= "-"
     @stream ?= process.stdout
     
   log: (level,message) ->
     unless level in @_suppress[@level]
-      @print "#{level.toUpperCase()} [#{(new Date().toISOString())}] #{message}"
+      @print sprintf "%7s [%s] %s '%s'",
+        level.toUpperCase(),
+        new Date().toISOString(),
+        @name,
+        message
     
   print: (string) -> @stream.write string + "\n"
   

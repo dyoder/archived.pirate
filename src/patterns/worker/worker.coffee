@@ -20,7 +20,9 @@ class Worker extends Connector
   accept: (callback) ->
     @_pending++
     @_from.dequeue (error,message) =>
-      @_getMessenger(message.replyTo).send callback error,message
+      response = @enrich callback error, message
+      response.id = message.id
+      @_getMessenger(message.replyTo).send response
       @_end() if --@_pending is 0 and @_finish is true
 
   end: ->

@@ -22,7 +22,9 @@ class Reply extends Connector
   reply: (callback) ->
     @_pending++
     @_from.receive (error,message) =>
-      @_to.send callback error, message
+      response = @enrich callback error, message
+      response.id = message.id
+      @_to.send response
       @_end() if --@_pending is 0 and @_finish is true
     
   end: -> 
