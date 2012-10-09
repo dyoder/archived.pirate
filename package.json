@@ -1,6 +1,6 @@
 {
   "name": "pirate",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "A tuplespace-based messaging transport.",
   "main": "lib/pirate.coffee",
   "dependencies": {
@@ -9,7 +9,7 @@
     "sprintf": "0.1.1"
   },
   "devDependencies": {
-    "colors": "6.0.x"
+    "colors": "0.6.x"
   },
   "scripts": {
     "test": "rake test"
