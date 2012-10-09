@@ -1,5 +1,5 @@
 testify = require "./testify"
-{config,make} = require "./helpers"
+{make} = require "./helpers"
 Reply = require "../src/patterns/request-reply/reply"
 Request = require "../src/patterns/request-reply/request"
 

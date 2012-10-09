@@ -7,7 +7,7 @@ class Request extends Connector
 
     super configuration
     
-    {@channel,@timeout} = configuration
+    {@timeout} = configuration
     @timeout ?= 60 * 1000 # 60 seconds in milliseconds
 
     @_from = new Messenger

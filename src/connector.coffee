@@ -1,9 +1,10 @@
 class Connector
   
   constructor: (configuration) ->
-    {@transport,@logger,debug} = configuration
+    {@transport,@channel,@name,@replyTo,@logger,debug} = configuration
     @logger ?= @transport.logger
     @logger.level = "debug" if debug is true
+    @logger.name = @name if @name?
 
   enrich: (message) ->
     if message.charAt

@@ -1,5 +1,5 @@
 testify = require "./testify"
-{config,make} = require "./helpers"
+{make} = require "./helpers"
 Queue = require "../src/channels/queue"
   
 

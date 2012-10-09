@@ -1,4 +1,4 @@
-config =
+defaults =
   transport:
     host: "localhost"
     port: 6379
@@ -8,10 +8,16 @@ config =
 
 Transport = require "../src/transports/redis"
 
-make = (Class) ->
-  config.channel.transport = new Transport config.transport
-  new Class config.channel
+extend = (object, mixins...) ->
+  for mixin in mixins
+    for key, value of mixin
+      object[key] = value
+  object
+    
+make = (Class,configuration={}) ->
+  configuration = extend {}, defaults.channel, configuration
+  configuration.transport = new Transport defaults.transport
+  new Class configuration
 
 module.exports =
-  config: config
   make: make

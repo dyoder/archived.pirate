@@ -4,7 +4,6 @@ class Messenger extends Connector
   
   constructor: (configuration) ->
     super configuration
-    {@channel,@replyTo} = configuration
     @channel = "messenger.#{@channel}"
     
   send: (message,callback) ->

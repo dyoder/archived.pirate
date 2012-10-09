@@ -6,7 +6,6 @@ class Reply extends Connector
   constructor: (configuration) ->
 
     super configuration
-    {@channel} = configuration
 
     @_to = new Messenger
       channel: "reply.#{@channel}"

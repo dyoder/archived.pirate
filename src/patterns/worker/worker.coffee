@@ -7,7 +7,6 @@ class Worker extends Connector
   constructor: (configuration) ->
   
     super configuration
-    {@channel} = configuration
   
     @_from = new Queue
       channel: "request.#{@channel}"

@@ -4,7 +4,6 @@ class Subscription extends Connector
   
   constructor: (configuration) ->
     super configuration
-    {@channel,@replyTo} = configuration
     @channel = "subscription.#{@channel}"
     
   publish: (message,callback) ->

@@ -4,13 +4,13 @@ Buffer = (require "buffer").Buffer
 Keys = 
   
   randomKey: (size) -> 
-    @bufferToKey @randomBytes size
+    Keys.bufferToKey Keys.randomBytes size
     
   randomBytes: (size) ->
     Crypto.randomBytes size
   
   numberToKey: (number) ->
-    @bufferToKey @numberToBytes number  
+    Keys.bufferToKey Keys.numberToBytes number  
 
   # We don't use, say, writeDoubleBE because I'm leery about hard-coding the
   # size of a double, given that buffers deal in raw memory. I was also getting
@@ -41,7 +41,7 @@ Keys =
         
   bufferToKey: (buffer) -> buffer.toString('base64')
   
-  buffersToKey: (buffers...) -> @bufferToKey Buffer.concat buffers
+  buffersToKey: (buffers...) -> Keys.bufferToKey Buffer.concat buffers
 
 
 module.exports = Keys

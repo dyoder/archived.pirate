@@ -1,5 +1,5 @@
 testify = require "./testify"
-{config,make} = require "./helpers"
+{make} = require "./helpers"
 Subscription = require "../src/channels/subscription"
 
 testify "Publish and subscribe", (test) ->

@@ -1,13 +1,14 @@
 testify = require "./testify"
-{config,make} = require "./helpers"
+{make} = require "./helpers"
 Dispatcher = require "../src/patterns/worker/dispatcher"
 Worker = require "../src/patterns/worker/worker"
+{randomKey} = require "../src/keys"
 
 testify "Dispatcher and worker", (test) ->
 
   dispatch = (message,callback) ->
     
-    dispatcher = make Dispatcher
+    dispatcher = make Dispatcher, name: randomKey 16
     dispatcher.request 
       content: "Dan"
       callback
