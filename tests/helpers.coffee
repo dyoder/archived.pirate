@@ -4,7 +4,7 @@ defaults =
     port: 6379
   channel:
     channel: "greetings"
-    debug: false
+    debug: true
 
 Transport = require "../src/transports/redis"
 

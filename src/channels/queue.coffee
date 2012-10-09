@@ -4,7 +4,7 @@ class Queue extends Connector
   
   constructor: (configuration) ->
     super configuration
-    @channel = "queue.#{@name}"
+    @channel = "queue.#{@channel}"
     
   enqueue: (message,callback) ->
     @transport.enqueue (@enrich message), callback
