@@ -56,8 +56,11 @@ class Request extends Connector
   _listen: ->
     @_from.receive (error,message) =>
       # TODO: what do i do with an error here?
-      # See ticket #19
-      @_process message
+      # See issues #19, #20.
+      unless error
+        @_process message
+      else
+        @logger.error "#{error.name}: #{error.message}"
 
   _registerTimeout: (id) ->
     @_timeouts[id] = (setTimeout (@_timeoutHandler id), @timeout)

@@ -38,10 +38,13 @@ class Dispatcher extends Connector
     @_to.end()
 
   _listen: ->
-    @_from.receive (error,reply) =>
+    @_from.receive (error,message) =>
       # TODO: what do i do with an error here?
       # See issues #19, #20.
-      @_process reply
+      unless error
+        @_process message
+      else
+        @logger.error "#{error.name}: #{error.message}"
 
   _process: (message) ->
     
