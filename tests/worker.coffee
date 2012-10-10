@@ -26,6 +26,6 @@ testify "Dispatcher and worker", (test) ->
     test.assert.equal "Hello Dan!", message?.content
     test.done()
   
-  work (error,message) -> 
+  work (error,message,callback) -> 
     test.assert.ifError error
-    "Hello #{message.content}!"
+    callback null, "Hello #{message.content}!"

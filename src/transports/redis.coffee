@@ -21,9 +21,9 @@ class Transport
       log: (string,level) => @logger[level](string)
   
   send: (message,callback) ->
-    action = "Send message: #{message.content[0..15]}"
-    @logger.info "#{action} ..."
     {channel} = message
+    action = "Send message on channel: #{channel}"
+    @logger.info "#{action}"
     @clients.acquire (error,client) =>
       if error
         @logger.error "#{action} - #{error.name}: #{error.message}"
@@ -33,13 +33,13 @@ class Transport
           if error
             @logger.error "#{action} - #{error.name}: #{error.message}"
           else
-            @logger.info "#{action} successful"
+            @logger.info "#{action} << SUCCESS >>"
 
           callback error, result if callback
 
   receive: (channel,callback) ->
     action = "Receive message on channel: #{channel}"
-    @logger.info "#{action} ..."
+    @logger.info "#{action}"
     @clients.acquire (error,client) =>
       if error
         @logger.error "#{action} - #{error.name}: #{error.message}"
@@ -49,7 +49,7 @@ class Transport
           if error
             @logger.error "#{action} - #{error.name}: #{error.message}"
           else
-            @logger.info "#{action} successful"
+            @logger.info "#{action} << SUCCESS >>"
 
           try
             [key,json] = results

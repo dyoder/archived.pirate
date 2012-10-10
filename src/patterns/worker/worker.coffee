@@ -19,10 +19,17 @@ class Worker extends Connector
   accept: (callback) ->
     @_pending++
     @_from.dequeue (error,message) =>
-      response = @enrich callback error, message
-      response.id = message.id
-      @_getMessenger(message.replyTo).send response
-      @_end() if --@_pending is 0 and @_finish is true
+      callback error, message, (error,response) =>
+        unless error
+          @logger.info "Process message #{message.id} << SUCCESS >>"
+          response = @enrich response
+          response.id = message.id
+          @_getMessenger(message.replyTo).send response, (error,result) ->
+            if error
+              @logger.error "Unable to send response for message #{message.id}"
+          @_end() if --@_pending is 0 and @_finish is true
+        else
+          @logger.error "Unable to process message #{message.id} (#{error.name}: #{error.message})"
 
   end: ->
     @_finish = true
