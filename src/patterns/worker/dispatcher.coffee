@@ -7,8 +7,9 @@ class Dispatcher extends Connector
   constructor: (configuration) ->
 
     super configuration
-    {@timeout} = configuration
+    {@timeout,@retries} = configuration
     @timeout ?= 60 * 1000 # 60 seconds in milliseconds
+    @retries ?= 0
 
     @_from = new Messenger
       channel: "private.#{@name}"
@@ -22,15 +23,15 @@ class Dispatcher extends Connector
     @_counter = 0
     @_callbacks = {}
     @_timeouts = {}
+    @_retries = {}
 
   request: (message,callback) ->
     message = @enrich message
-    if callback
-      message.id = @_counter++
-      @_registerCallback message.id, callback
-      @_listen()
-      @_registerTimeout message.id
-      
+    message.id = @_counter++
+    callback ?= (error,response) -> 
+    @_registerCallback message.id, callback
+    @_listen()
+    @_registerTimeout message
     @_to.enqueue message
     
   end: -> 
@@ -53,25 +54,35 @@ class Dispatcher extends Connector
     clearTimeout @_timeouts[message.id]
     @_timeouts[message.id] = null
     
-    callback = @_callbacks[message.id]
-    if callback
-      @_callbacks[message.id] = null
-      callback null, message
-    else
-      @logger.error "No callback found for message ID #{message.id}"
+    @_fireCallback message.id, null, message
 
   _registerCallback: (id,callback) ->
     @logger.info "Registering callback for message ID #{id}"
+    @_retries[id] = 0
     @_callbacks[id] = callback
     
-  _registerTimeout: (id) ->
-    @_timeouts[id] = (setTimeout (@_timeoutHandler id), @timeout)
-    
-  _timeoutHandler: (id) ->
-    =>
-      @logger.error "Timeout expired for message ID #{id}"
-      callback = @_callbacks[id]
+  _fireCallback: (id,error,response) ->
+    callback = @_callbacks[id]
+    if callback
       @_callbacks[id] = null
-      callback(new Error "Timeout for message #{id}")
+      @_retries[id] = null
+      callback error, response
+    else
+      @logger.warn "Unknown message ID: #{id}"
+    
+    
+  _registerTimeout: (message) ->
+    @_timeouts[message.id] = (setTimeout (@_timeoutHandler message), @timeout)
+    
+  _timeoutHandler: (message) ->
+    =>
+      @logger.error "Timeout expired for message ID #{message.id}"
+      if @_retries[message.id] < @retries 
+        @_retries[message.id]++
+        @_listen()
+        @_registerTimeout message
+        @_to.enqueue message
+      else
+        @_fireCallback message.id, new Error "Message timed out: #{message.id}"
     
 module.exports = Dispatcher

@@ -21,7 +21,7 @@ class Worker extends Connector
     @_from.dequeue (error,message) =>
       callback error, message, (error,response) =>
         unless error
-          @logger.info "Process message #{message.id} << SUCCESS >>"
+          @logger.info "Processed message #{message.id}"
           response = @enrich response
           response.id = message.id
           @_getMessenger(message.replyTo).send response, (error,result) ->

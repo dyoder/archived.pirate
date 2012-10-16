@@ -7,7 +7,7 @@ class Connector
     @logger.name = @name if @name?
 
   enrich: (message) ->
-    if message.charAt
+    unless message instanceof Object
       message = content: message
     message.channel = @channel
     message.replyTo ?= @replyTo

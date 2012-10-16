@@ -1,5 +1,6 @@
 redis = require "redis"
 {Pool} = require "generic-pool"
+{md5} = require "fairmont"
 
 _default_logger = ->
   Logger = require "../logger"
@@ -22,7 +23,8 @@ class Transport
   
   send: (message,callback) ->
     {channel} = message
-    action = "Send message on channel: #{channel}"
+    id = if message.id? then message.id else md5 message.content.toString()
+    action = "Send message #{id} on channel: #{channel}"
     @logger.info "#{action}"
     @clients.acquire (error,client) =>
       if error
@@ -33,7 +35,7 @@ class Transport
           if error
             @logger.error "#{action} - #{error.name}: #{error.message}"
           else
-            @logger.info "#{action} << SUCCESS >>"
+            @logger.info "Success: #{action}"
 
           callback error, result if callback
 
@@ -48,18 +50,19 @@ class Transport
           @clients.release client
           if error
             @logger.error "#{action} - #{error.name}: #{error.message}"
-          else
-            @logger.info "#{action} << SUCCESS >>"
-
-          try
-            [key,json] = results
-            message = JSON.parse(json)
-          catch error
-            error = @unexpected "receive", error
-            @logger.error "#{action} - #{error.name}: #{error.message}"
             callback error
+          else
+            try
+              [key,json] = results
+              message = JSON.parse(json)
+              id = if message.id? then message.id else md5 message.content.toString()
+              @logger.info "Success: Receive message #{id} on channel: #{channel}"
+              callback null, message
+            catch error
+              error = @unexpected "receive", error
+              @logger.error "#{action} - #{error.name}: #{error.message}"
+              callback error
 
-          callback null, message
 
   enqueue: (message) -> @send message
   
