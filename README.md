@@ -42,35 +42,40 @@ Let's create a simple dispatcher/worker system. Our worker will take a name and 
 First, let's create our dispatcher:
 
     Transport = require "pirate/transports/redis"
-    Dispatcher = require "pirate/patterns/worker/dispatcher"
-    {randomKey} = require "pirate/keys"
+    Dispatcher = require "pirate/channels/composite/worker/dispatcher"
 
     transport = new Transport host: "localhost", port: 6379
-    dispatcher = new Dispatcher 
-      transport: transport
-      channel: "greetings"
-      name: randomKey 16
+    dispatcher = new Dispatcher transport: transport, name: "greetings"
 
-    dispatcher.request "Dan", (error,response) ->
-      console.log response
+    # Define a generic result handler ...
+    dispatcher.on "greetings.*.result", (result) ->
+      console.log result
+      
+    # Same thing with the error handler ...
+    dispatcher.on "*.error", (error) -> console.log error
+
+    # Send a request!
+    dispatcher.request "Dan"
+      
+The `greetings.*.result` business uses an event bus that takes wild-cards, so you can zero in on specific messages, or just provide generic result handler, as we've done here.
 
 Okay, now for our worker:
 
     Transport = require "pirate/transports/redis"
-    Worker = require "pirate/patterns/worker/worker"
+    Worker = require "pirate/channels/composite/worker/worker"
 
     # This needs to be the same as in the dispatcher
     transport = new Transport host: "localhost", port: 6379
-    worker = new Worker transport: transport, channel: "greetings"
+    worker = new Worker transport: transport, name: "greetings"
     
-    work = ->
-      worker.accept (error,message) ->
-        "Hello #{message.content}!"
-        process.nextTick work
+    # Define a generic task handler ... result is a function that we can use 
+    # to return a result
+    worker.on "greetings.*.task", (task,result) ->
+      result "Hello #{task.content}!"
     
-    # begin    
-    work()
+    # Generic error handler, just as above ...
+    worker.on "*.error", (error) -> console.log error
+    
+    worker.accept()
       
-That's it! Notice that the only physical endpoint is specified when creating the Transport. The `channel` endpoint is a purely logical one. Any worker listening on this channel can get tasks, and no two workers will get the same task. Similarly, any number of dispatchers can be sending tasks, provided they all provide unique names (which is why we're using the `randomKey` method provided by Pirate to set the name).
-
-[status]: #Status
+That's it! Notice that the only physical endpoint is specified when creating the Transport. The `channel` endpoint is a purely logical one. Any worker listening on this channel can get tasks, and no two workers will get the same task. Similarly, any number of dispatchers can be sending tasks.
