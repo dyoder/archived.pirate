@@ -12,7 +12,7 @@ testify "Queue and dequeue a request", (test) ->
   
   # Okay, first let's send a message
   from = make Queue
-  from.bus.on "#{from.channel}.*.error", errorHandler
+  from.bus.on "#{from.name}.*.error", errorHandler
   from.enqueue "Hello!"  
   # We call end here because we want to make sure that the test still succeeds
   # and doesn't wipe out pending messages  
@@ -20,8 +20,8 @@ testify "Queue and dequeue a request", (test) ->
   
   # Next, let's dequeue one ...
   to = make Queue
-  to.bus.on "#{to.channel}.*.error", errorHandler
-  to.bus.once "#{to.channel}.*.dequeue", (message) ->
+  to.bus.on "#{to.name}.*.error", errorHandler
+  to.bus.once "#{to.name}.*.dequeue", (message) ->
     test.assert.equal "Hello!", message?.content
     test.done()
   to.dequeue()
