@@ -20,7 +20,8 @@ class Reply extends Connector
     
   reply: (callback) ->
     @_pending++
-    @_from.receive (error,message) =>
+    @_from.receive()
+    @_from.bus.on "messenger.receive.*.success", (message) =>
       response = @enrich callback error, message
       response.id = message.id
       @_to.send response

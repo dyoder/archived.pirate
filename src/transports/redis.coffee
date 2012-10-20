@@ -1,16 +1,17 @@
 redis = require "redis"
 {Pool} = require "generic-pool"
-{md5} = require "fairmont"
+{streamline} = require "fairmont"
+Bus = require "node-bus"
 
-_default_logger = ->
-  Logger = require "../logger"
-  new Logger level: "error"
-      
+# Error monad function
+mError = (thing) ->
+  if thing instanceof Error then thing else new Error thing.toString()
+    
 class Transport
   
   constructor: (configuration) ->
-    {@logger,@timeout,debug} = configuration 
-    @logger ?= _default_logger()
+    {@timeout,@bus,debug} = configuration 
+    @bus ?= new Bus
     @clients = Pool 
       name: "redis-transport", max: 10
       create: (callback) => 
@@ -19,103 +20,86 @@ class Transport
         client.on "error", (error) -> callback error
         client.on "connect", -> callback null, client
       destroy: (client) => client.quit()
-      log: (string,level) => @logger[level](string)
+      log: (string,level) => @bus.send "transport.pool.#{level}", string
   
-  send: (message,callback) ->
-    {channel} = message
-    id = if message.id? then message.id else md5 message.content.toString()
-    action = "Send message #{id} on channel: #{channel}"
-    @logger.info "#{action}"
-    @clients.acquire (error,client) =>
-      if error
-        @logger.error "#{action} - #{error.name}: #{error.message}"
-      else
-        client.lpush "queue.#{channel}", JSON.stringify(message), (error,result) =>
-          @clients.release client
-          if error
-            @logger.error "#{action} - #{error.name}: #{error.message}"
-          else
-            @logger.info "Success: #{action}"
-
-          callback error, result if callback
-
-  receive: (channel,callback) ->
-    action = "Receive message on channel: #{channel}"
-    @logger.info "#{action}"
-    @clients.acquire (error,client) =>
-      if error
-        @logger.error "#{action} - #{error.name}: #{error.message}"
-      else
-        client.brpop "queue.#{channel}", 0, (error,results) =>
-          @clients.release client
-          if error
-            @logger.error "#{action} - #{error.name}: #{error.message}"
-            callback error
-          else
-            try
-              [key,json] = results
-              message = JSON.parse(json)
-              id = if message.id? then message.id else md5 message.content.toString()
-              @logger.info "Success: Receive message #{id} on channel: #{channel}"
-              callback null, message
-            catch error
-              error = @unexpected "receive", error
-              @logger.error "#{action} - #{error.name}: #{error.message}"
-              callback error
-
-
-  enqueue: (message) -> @send message
-  
-  dequeue: (channel,callback) -> @receive channel, callback
-
-  publish: (message,callback) ->
-    action = "Publish message: #{message.content[0..15]}"
-    {channel} = message
-    @logger.info "#{action} ..."
-    @clients.acquire (error,client) =>
-      if error
-        @logger.error "#{action} - #{error.name}: #{error.message}"
-      else
-        client.publish channel, JSON.stringify(message), (error) =>
-          @clients.release client
-          if error
-            @logger.error "#{action} - #{error.name}: #{error.message}"
-          else
-            @logger.info "#{action} successful"
-        
+  send: (message) ->
+    @_send message, "send"
     
-  subscribe: (channel,callback) ->
-    action = "Subscribe to channel: #{channel}"
-    _client = null
-    @logger.info "#{action} ..."
-    @clients.acquire (error,client) =>
-      _client = client
-      if error
-        @logger.error "#{action} - #{error.name}: #{error.message}"
-      else
-        client.subscribe channel
-        client.on "message", (channel,json) =>
-          try
-            callback null, JSON.parse(json)
-            @logger.info "#{action} successful"
-          catch error
-            error = @_unexpected "subscribe", error
-            @logger.error "#{action} - #{error.name}: #{error.message}"
-            callback error
-          
-    # we return the unsubscribe function
-    =>
-      if _client?
-        @logger.info "Unsubscribing ..."
-        _client.unsubscribe()
-        @clients.release _client
-        
-        
-  unexpected: (method,error) ->
-    new Error("""
-      Transport #{method} method returned unexpected result ('#{error.name}: #{error.message}')
-    """)
+  receive: (channel) ->
+    @_receive channel, "receive"
     
+  enqueue: (message) ->
+    @_send message, "enqueue"
+    
+  dequeue: (message) ->
+    @_receive message, "dequeue"
+    
+  _send: (message,verb) ->
+    {channel,id} = message
+    handler = streamline (error) => 
+      @bus.send "transport.#{verb}.#{id}.error", mError error
+    @clients.acquire handler (client) =>
+      client.lpush "queue.#{channel}", JSON.stringify(message), handler (result) =>
+        @clients.release client
+        @bus.send "transport.#{verb}.#{id}.success"
+      
+  _receive: (channel,verb) ->
+    handler = streamline (error) => 
+      @bus.send "transport.#{verb}.error", mError error
+    @clients.acquire handler (client) =>
+      client.brpop "queue.#{channel}", 0, handler (results) =>
+        @clients.release client
+        try
+          [key,json] = results
+          message = JSON.parse(json)
+          {channel,id} = message
+          @bus.send "transport.#{verb}.#{id}.success", message
+        catch error
+          @bus.send "transport.#{verb}.error", mError error
+
+  # publish: (message,callback) ->
+  #   action = "Publish message: #{message.content[0..15]}"
+  #   {channel} = message
+  #   @logger.info "#{action} ..."
+  #   @clients.acquire (error,client) =>
+  #     if error
+  #       @logger.error "#{action} - #{error.name}: #{error.message}"
+  #     else
+  #       client.publish channel, JSON.stringify(message), (error) =>
+  #         @clients.release client
+  #         if error
+  #           @logger.error "#{action} - #{error.name}: #{error.message}"
+  #         else
+  #           @logger.info "#{action} successful"
+  #       
+  #   
+  # subscribe: (channel,callback) ->
+  #   action = "Subscribe to channel: #{channel}"
+  #   _client = null
+  #   @logger.info "#{action} ..."
+  #   @clients.acquire (error,client) =>
+  #     _client = client
+  #     if error
+  #       @logger.error "#{action} - #{error}"
+  #     else
+  #       client.subscribe channel
+  #       client.on "message", (channel,json) =>
+  #         try
+  #           callback null, JSON.parse(json)
+  #           @logger.info "#{action} successful"
+  #         catch error
+  #           error = new Error "#{action} - #{error.name}: #{error.message}"
+  #           @logger.error 
+  #           callback error
+  #         
+  #   # we return the unsubscribe function
+  #   =>
+  #     if _client?
+  #       @logger.info "Unsubscribing ..."
+  #       _client.unsubscribe()
+  #       @clients.release _client
+  #       
+        
   end: -> 
     @clients.drain => @clients.destroyAllNow()
   

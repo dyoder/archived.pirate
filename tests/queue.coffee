@@ -5,20 +5,28 @@ Queue = require "../src/channels/queue"
 
 testify "Queue and dequeue a request", (test) ->
   
-  enqueue = (message) ->
-
-    queue = make Queue
-    queue.enqueue message
-    queue.end()
+  # Fail the test on an error
+  errorHandler = (error) ->
+    # console.log error
+    test.fail()
   
-  dequeue = (callback) ->
-
-    queue = make Queue
-    queue.dequeue callback
-    queue.end()
+  # Okay, first let's send a message
+  from = make Queue
+  from.bus.on "#{from.channel}.*.error", errorHandler
+  from.enqueue "Hello!"  
+  # We call end here because we want to make sure that the test still succeeds
+  # and doesn't wipe out pending messages  
+  from.end()
   
-  enqueue "Hello!"
-  dequeue (error,message) ->
+  # Next, let's dequeue one ...
+  to = make Queue
+  to.bus.on "#{to.channel}.*.error", errorHandler
+  to.bus.once "#{to.channel}.dequeue.*.success", (message) ->
     test.assert.equal "Hello!", message?.content
     test.done()
+  to.dequeue()
+  # Same strategy: we should process the message before exiting, even though
+  # we've called end()  
+  to.end()
+  
   
