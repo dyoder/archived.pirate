@@ -3,7 +3,7 @@ defaults =
     host: "localhost"
     port: 6379
   channel:
-    channel: "greetings"
+    name: "greetings"
     debug: true
 
 Transport = require "../src/transports/redis"

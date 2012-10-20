@@ -1,9 +1,9 @@
 testify = require "./testify"
 {make} = require "./helpers"
-Queue = require "../src/channels/queue"
+Messenger = require "../src/channels/messenger"
   
 
-testify "Queue and dequeue a request", (test) ->
+testify "Send and receive messages", (test) ->
   
   # Fail the test on an error
   errorHandler = (error) ->
@@ -11,22 +11,21 @@ testify "Queue and dequeue a request", (test) ->
     test.fail()
   
   # Okay, first let's send a message
-  from = make Queue
-  from.bus.on "#{from.channel}.*.error", errorHandler
-  from.enqueue "Hello!"  
+  from = make Messenger
+  from.bus.on "#{from.name}.*.error", errorHandler
+  from.send "Hello!"  
   # We call end here because we want to make sure that the test still succeeds
   # and doesn't wipe out pending messages  
   from.end()
   
   # Next, let's dequeue one ...
-  to = make Queue
-  to.bus.on "#{to.channel}.*.error", errorHandler
-  to.bus.once "#{to.channel}.*.dequeue", (message) ->
+  to = make Messenger
+  to.bus.on "#{to.name}.*.error", errorHandler
+  to.bus.on "#{to.name}.*.receive", (message) ->
     test.assert.equal "Hello!", message?.content
     test.done()
-  to.dequeue()
+  to.receive()
   # Same strategy: we should process the message before exiting, even though
   # we've called end()  
   to.end()
-  
   

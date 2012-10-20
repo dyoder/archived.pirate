@@ -37,25 +37,25 @@ class Transport
   _send: (message,verb) ->
     {channel,id} = message
     handler = streamline (error) => 
-      @bus.send "transport.#{verb}.#{id}.error", mError error
+      @bus.send "#{channel}.#{id}.#{verb}.error", mError error
     @clients.acquire handler (client) =>
-      client.lpush "queue.#{channel}", JSON.stringify(message), handler (result) =>
+      client.lpush "#{channel}", JSON.stringify(message), handler (result) =>
         @clients.release client
-        @bus.send "transport.#{verb}.#{id}.success"
+        @bus.send "#{channel}.#{id}.#{verb}"
       
   _receive: (channel,verb) ->
     handler = streamline (error) => 
-      @bus.send "transport.#{verb}.error", mError error
+      @bus.send "#{channel}.#{verb}.error", mError error
     @clients.acquire handler (client) =>
-      client.brpop "queue.#{channel}", 0, handler (results) =>
+      client.brpop "#{channel}", 0, handler (results) =>
         @clients.release client
         try
           [key,json] = results
           message = JSON.parse(json)
           {channel,id} = message
-          @bus.send "transport.#{verb}.#{id}.success", message
+          @bus.send "#{channel}.#{id}.#{verb}", message
         catch error
-          @bus.send "transport.#{verb}.error", mError error
+          @bus.send "#{channel}.#{verb}.error", mError error
 
   # publish: (message,callback) ->
   #   action = "Publish message: #{message.content[0..15]}"

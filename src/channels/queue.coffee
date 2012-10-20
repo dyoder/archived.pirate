@@ -1,24 +1,19 @@
-Connector = require "../connector"
+Channel = require "../channel"
 
-class Queue extends Connector
+class Queue extends Channel
   
   constructor: (configuration) ->
+    
     super configuration
-    @channel = "queue.#{@channel}"
-    @transport.bus.on "transport.dequeue.*.success", (message) =>
-      @bus.send "#{@channel}.dequeue.#{message.id}.success", message
-    @transport.bus.on "transport.dequeue.*.error", (error) =>
-      @bus.send "#{@channel}.dequeue.error", error
-    
+        
   enqueue: (message) ->
-    message = @enrich message
-    @transport.enqueue message
-    @transport.bus.once "transport.enqueue.#{message.id}.success", =>
-      @bus.send "#{@channel}.enqueue.#{message.id}.success"
-    @transport.bus.once "transport.enqueue.#{message.id}.error", (error) =>
-      @bus.send "#{@channel}.enqueue.#{message.id}.error"
     
+    message = @envelope message
+
+    @transport.enqueue message
+
   dequeue: ->
-    @transport.dequeue @channel
+    
+    @transport.dequeue @name
     
 module.exports = Queue

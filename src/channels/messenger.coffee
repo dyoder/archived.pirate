@@ -1,24 +1,24 @@
-Connector = require "../connector"
+Channel = require "../channel"
 
-class Messenger extends Connector
+# This probably looks a bit strange ... or the Queue class will, depending on
+# what you look at first. Because they're identical. Semantically, though,
+# they're different things. So I'm keeping them separate for now. At some
+# point, I may unify them, they way we did with the Redis Transport.
+
+class Messenger extends Channel
   
   constructor: (configuration) ->
+    
     super configuration
-    @channel = "messenger.#{@channel}"
-    
-  send: (message,callback) ->
-    @transport.send (@enrich message)
-    @transport.bus.once "transport.send.#{message.id}.success", ->
-      @bus.send "messenger.send.#{message.id}.success"
-    @transport.bus.once "transport.send.#{message.id}.error", ->
-      @bus.send "messenger.send.#{message.id}.error"
 
-  receive: (callback) ->
-    @transport.receive @channel
-    @transport.bus.once "transport.receive.#{message.id}.success", ->
-      @bus.send "messenger.receive.#{message.id}.success"
-    @transport.bus.once "transport.receive.#{message.id}.error", ->
-      @bus.send "messenger.receive.#{message.id}.error"
+  send: (message) ->
     
+    message = @envelope message
+    
+    @transport.send message
+    
+  receive: ->
+    
+    @transport.receive @name
       
 module.exports = Messenger
