@@ -1,4 +1,4 @@
-{md5} = require "fairmont"
+{md5,w} = require "fairmont"
 {randomKey} = require "./keys"
 
 class Channel
@@ -8,6 +8,16 @@ class Channel
     @timeout ?= 60 * 1000 # 60 seconds in milliseconds
     @replyTo ?= randomKey 16
     @bus ?= @transport.bus
+    if debug 
+      Logger = require "./logger"
+      logger = new Logger level: "debug"
+      levels = w "error warn info debug verbose"
+      @bus.receive (event,args...) => 
+        [ignored...,level] = event.split "."
+        if level in levels
+          logger[level] args.join " "
+        else
+          logger.info "#{event}"
 
   envelope: (message) ->
     unless message instanceof Object
@@ -17,6 +27,9 @@ class Channel
     message.replyTo ?= @replyTo
     message.timeout ?= @timeout
     message
+    
+  on: (args...) ->
+    @bus.on args...
 
   end: -> @transport.end()
 

@@ -57,48 +57,39 @@ class Transport
         catch error
           @bus.send "#{channel}.#{verb}.error", mError error
 
-  # publish: (message,callback) ->
-  #   action = "Publish message: #{message.content[0..15]}"
-  #   {channel} = message
-  #   @logger.info "#{action} ..."
-  #   @clients.acquire (error,client) =>
-  #     if error
-  #       @logger.error "#{action} - #{error.name}: #{error.message}"
-  #     else
-  #       client.publish channel, JSON.stringify(message), (error) =>
-  #         @clients.release client
-  #         if error
-  #           @logger.error "#{action} - #{error.name}: #{error.message}"
-  #         else
-  #           @logger.info "#{action} successful"
-  #       
-  #   
-  # subscribe: (channel,callback) ->
-  #   action = "Subscribe to channel: #{channel}"
-  #   _client = null
-  #   @logger.info "#{action} ..."
-  #   @clients.acquire (error,client) =>
-  #     _client = client
-  #     if error
-  #       @logger.error "#{action} - #{error}"
-  #     else
-  #       client.subscribe channel
-  #       client.on "message", (channel,json) =>
-  #         try
-  #           callback null, JSON.parse(json)
-  #           @logger.info "#{action} successful"
-  #         catch error
-  #           error = new Error "#{action} - #{error.name}: #{error.message}"
-  #           @logger.error 
-  #           callback error
-  #         
-  #   # we return the unsubscribe function
-  #   =>
-  #     if _client?
-  #       @logger.info "Unsubscribing ..."
-  #       _client.unsubscribe()
-  #       @clients.release _client
-  #       
+  publish: (message) ->
+    {channel,id} = message
+    handler = streamline (error) => 
+      @bus.send "#{channel}.publish.error", mError error
+    @clients.acquire handler (client) =>
+      client.publish channel, JSON.stringify(message), handler =>
+        @clients.release client
+        @bus.send "#{channel}.#{id}.publish", message
+        
+    
+  subscribe: (channel) ->
+    _client = null
+    errorHandler = (error) => 
+      @bus.send "#{channel}.subscribe.error", mError error
+    handler = streamline errorHandler
+    @clients.acquire handler (client) =>
+      _client = client
+      client.subscribe channel
+      client.on "message", (channel,json) =>
+        try
+          message = JSON.parse json
+          {id} = message
+          @bus.send "#{channel}.message", message
+        catch error
+          @bus.send "#{channel}.subscribe.error", message
+          
+    # we return the unsubscribe function
+    =>
+      if _client?
+        _client.unsubscribe()
+        @bus.send "#{channel}.unsubscribe"
+        @clients.release _client
+        
         
   end: -> 
     @clients.drain => @clients.destroyAllNow()

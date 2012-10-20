@@ -4,30 +4,19 @@ Subscription = require "../src/channels/subscription"
 
 testify "Publish and subscribe", (test) ->
 
-  publish = (message) ->
-    
-    subscription = make Subscription
-    subscription.publish message
-    subscription.end()
-
-
-
-  subscribe = (callback) ->
-    
-    subscription = make Subscription
-    subscription.subscribe (error,message) ->
-      subscription.unsubscribe()
-      callback error, message
-    subscription.end()
-
-
-  id = setTimeout (-> test.fail "Never got publish" ; process.exit() ), 1000
+  publisher = make Subscription
+  publisher.on "*.error", (error) -> test.fail error
   
-  subscribe (error,message) ->
-    clearTimeout(id)
+  # Give it a second to make sure the subscribe is set up
+  setTimeout (-> publisher.publish "Hello!"; publisher.end() ), 100
+  
+
+  subscriber = make Subscription
+  subscriber.subscribe()
+  id = setTimeout (-> test.fail "Never got publish" ; process.exit() ), 1000
+  subscriber.on "#{subscriber.name}.message", (message) ->
+    clearTimeout id
+    subscriber.unsubscribe()
     test.assert.equal "Hello!", message?.content    
     test.done()
-
-  # Give it a second to make sure the subscribe is set up
-  setTimeout (-> publish "Hello!"), 100
-  
+  subscriber.end()
