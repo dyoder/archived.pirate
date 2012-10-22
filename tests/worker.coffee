@@ -5,8 +5,7 @@ Worker = require "../src/channels/composite/worker/worker"
 
 testify "Dispatcher and worker", (test) ->
   
-  errorHandler = (error) ->
-    test.fail error
+  errorHandler = (error) -> test.fail error
     
   dispatcher = make Dispatcher
   dispatcher.bus.on "*.error", errorHandler
@@ -16,9 +15,7 @@ testify "Dispatcher and worker", (test) ->
     test.done()
   dispatcher.end()
 
-  # We add the timeout so that end() will return more quickly
-  # just to expedite the test
-  worker = make Worker, timeout: 1000
+  worker = make Worker
   worker.bus.on "*.error", errorHandler
   worker.accept()
   worker.bus.on "greetings.*.task", (task,result) ->
