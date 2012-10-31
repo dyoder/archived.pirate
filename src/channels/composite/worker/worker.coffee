@@ -31,13 +31,13 @@ class Worker extends Channel
       {replyTo,id} = message
 
       # listen for the result event ...
-      @bus.once "#{@name}.#{message.id}.result", (result) =>    
+      @bus.once "#{@name}.#{id}.result", (result) =>    
         (@_messenger replyTo).send content: result, id: id
         @_tasks.end() if @_stopped
 
       # ... and generate a 'task' even, passing the message and result
       # function
-      @bus.event "#{@name}.#{message.id}.task", message, result
+      @bus.event "#{@name}.#{message.id}.task", message
       
       # check for the next event ...
       process.nextTick _run unless @_stopped
