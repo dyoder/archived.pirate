@@ -19,6 +19,6 @@ testify "Dispatcher and worker", (test) ->
   worker.bus.on "*.error", errorHandler
   worker.accept()
   worker.bus.on "greetings.*.task", (task,result) ->
-    result "Hello #{task.content}!"
+    worker.bus.event "greetings.#{task.id}.result", "Hello #{task.content}!"
   worker.end()
   

@@ -30,9 +30,8 @@ class Worker extends Channel
       # Grab the channel and id from the message ...
       {replyTo,id} = message
 
-      # ... create a function that the worker can use to send the result 
-      # to that channel ...    
-      result = (result) => 
+      # listen for the result event ...
+      @bus.once "#{@name}.#{message.id}.result", (result) =>    
         (@_messenger replyTo).send content: result, id: id
         @_tasks.end() if @_stopped
 

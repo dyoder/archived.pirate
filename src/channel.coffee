@@ -21,6 +21,12 @@ class Channel
     
   on: (args...) ->
     @bus.on args...
+    
+  once: (args...) ->
+    @bus.once args...
+    
+  event: (args...) ->
+    @bus.event args...
 
   end: -> @transport.end()
 

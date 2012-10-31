@@ -23,8 +23,11 @@ class Dispatcher extends Channel
 
   request: (message) ->
     @_pending++
-    @_tasks.enqueue @envelope message
+    message = @envelope message
+    @_tasks.enqueue message
     @_run() unless @_started
+    message.id
+    
 
   _run: ->
     @_started = true
