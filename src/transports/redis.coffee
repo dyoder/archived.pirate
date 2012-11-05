@@ -78,16 +78,16 @@ class Transport
         try
           message = JSON.parse json
           {id} = message
-          @bus.event "#{channel}.message", message
+          @bus.event "#{channel}.#{id}.message", message
         catch error
           @bus.event "#{channel}.subscribe.error", message
           
     # we return the unsubscribe function
     =>
       if _client?
-        _client.unsubscribe()
+        _client.unsubscribe => @clients.release _client
         @bus.event "#{channel}.unsubscribe"
-        @clients.release _client
+        
         
   _acquire: (handler) ->
     # the try-catch is required because the pool library can throw exceptions as

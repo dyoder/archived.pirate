@@ -16,4 +16,8 @@ class Subscription extends Channel
       @_unsubscribe()
       @_unsubscribe = null
       
+  end: ->
+    @unsubscribe()
+    super()
+      
 module.exports = Subscription

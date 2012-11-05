@@ -14,9 +14,9 @@ testify "Publish and subscribe", (test) ->
   subscriber = make Subscription
   subscriber.subscribe()
   id = setTimeout (-> test.fail "Never got publish" ; process.exit() ), 1000
-  subscriber.on "#{subscriber.name}.message", (message) ->
+  subscriber.on "#{subscriber.name}.*.message", (message) ->
     clearTimeout id
     subscriber.unsubscribe()
     test.assert.equal "Hello!", message?.content    
     test.done()
-  subscriber.end()
+    subscriber.end()
