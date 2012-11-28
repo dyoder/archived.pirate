@@ -11,7 +11,8 @@
     "node-bus": "0.3.x"
   },
   "devDependencies": {
-    "colors": "0.6.x"
+    "colors": "0.6.x",
+    "ax": "0.2.x"
   },
   "scripts": {
     "test": "rake test"

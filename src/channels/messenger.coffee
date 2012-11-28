@@ -18,7 +18,6 @@ class Messenger extends Channel
     @transport.send message
     
   receive: ->
-    
     @transport.receive @name
       
 module.exports = Messenger

@@ -1,5 +1,5 @@
 Messenger = require "../../messenger"
-Queue = require "../../queue"
+PriorityQueue = require "../../priority-queue"
 Channel = require "../../../channel"
 
 class Dispatcher extends Channel
@@ -8,7 +8,7 @@ class Dispatcher extends Channel
 
     super configuration
     
-    @_tasks = new Queue
+    @_tasks = new PriorityQueue
       name: @name
       transport: @transport
       replyTo: @replyTo
@@ -29,6 +29,12 @@ class Dispatcher extends Channel
     message.id
     
 
+  # Default the priority to 1
+  envelope: (message) ->
+    message = super message
+    message.priority ?= 1
+    message
+    
   _run: ->
     @_started = true
     _run = => @_results.receive()

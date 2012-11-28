@@ -1,6 +1,7 @@
 redis = require "redis"
 {Pool} = require "generic-pool"
 Bus = require "node-bus"
+{type} = require "fairmont"
 
 # Error monad function
 mError = (thing) ->
@@ -30,8 +31,8 @@ class Transport
   enqueue: (message) ->
     @_send message, "enqueue"
     
-  dequeue: (message) ->
-    @_receive message, "dequeue"
+  dequeue: (channel) ->
+    @_receive channel, "dequeue"
     
   _send: (message,verb) ->
     {channel,id} = message
@@ -45,7 +46,8 @@ class Transport
         
   _receive: (channel,verb) ->
     @_acquire (client) =>
-      client.brpop "#{channel}", 0, (error,results) =>
+      channel = if (type channel) is "array" then channel else [ channel ]
+      client.brpop channel..., 0, (error,results) =>
         unless error?
           @clients.release client
           try

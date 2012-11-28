@@ -23,7 +23,7 @@ testify "Pubsub", (test) ->
     {id,content} = message
     subscriber.event "greetings.#{id}.reply", "Hello #{content}!"
     subscriber.end()
-  
+      
   # Give it a second to make sure the subscribe is set up
   setTimeout (-> publisher.publish "Dan"; publisher.end()), 100
   

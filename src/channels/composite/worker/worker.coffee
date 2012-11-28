@@ -1,5 +1,5 @@
 Messenger = require "../../messenger"
-Queue = require "../../queue"
+PriorityQueue = require "../../priority-queue"
 Channel = require "../../../channel"
 
 class Worker extends Channel
@@ -8,7 +8,7 @@ class Worker extends Channel
   
     super configuration
   
-    @_tasks = new Queue
+    @_tasks = new PriorityQueue
       name: @name
       transport: @transport
       
