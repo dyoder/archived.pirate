@@ -1,6 +1,6 @@
 {
   "name": "pirate",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "A tuplespace-based messaging transport.",
   "main": "lib/pirate.coffee",
   "dependencies": {
