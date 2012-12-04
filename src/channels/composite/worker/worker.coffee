@@ -7,7 +7,10 @@ class Worker extends Channel
   constructor: (configuration) ->
   
     super configuration
-  
+    
+    {@interval} = configuration
+    @interval ?= 0
+    
     @_tasks = new PriorityQueue
       name: @name
       transport: @transport
@@ -42,7 +45,7 @@ class Worker extends Channel
       @bus.event "#{@name}.#{message.id}.task", message
       
       # check for the next event ...
-      process.nextTick _run unless @_stopped
+      (setTimeout _run, @interval) unless @_stopped
         
 
   _messenger: (name) ->
