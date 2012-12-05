@@ -16,6 +16,7 @@ class Channel
     # TODO: switch to Redis counter? this is probably faster, but I'm not certain ...
     message.id ?= randomKey 16    
     message.replyTo ?= @replyTo
+    message.replyRequested ?= true
     message.timeout ?= @timeout
     message
     

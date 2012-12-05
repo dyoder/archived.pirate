@@ -35,6 +35,7 @@ class Transport
     @_receive channel, "dequeue"
     
   _send: (message,verb) ->
+    console.log "TRANSPORT > SEND > REPLY TO", message.replyTo
     {channel,id} = message
     @_acquire (client) =>
       client.lpush "#{channel}", JSON.stringify(message), (error,result) =>

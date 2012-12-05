@@ -27,14 +27,15 @@ class Subscriber extends Channel
     @_subscription.bus.on "#{@name}.*.message", (message) =>
 
       # Grab the channel and id from the message ...
-      {replyTo,id} = message
+      {replyRequested,replyTo,id} = message
       
-      # listen for the result event ...
-      # TODO: this will create a memory leak if there's no response
-      @bus.once "#{@name}.#{id}.reply", (result) =>    
-        (@_messenger replyTo).send content: result, id: id
-        # TODO: what if there several outstanding listeners like this?
-        @_subscription.end() if @_stopped
+      if replyRequested
+        # listen for the result event ...
+        # TODO: this will create a memory leak if there's no response
+        @bus.once "#{@name}.#{id}.reply", (result) =>    
+          (@_messenger replyTo).send content: result, id: id
+          # TODO: what if there several outstanding listeners like this?
+          @_subscription.end() if @_stopped
 
   _messenger: (name) ->
     @_messengers[name] ?= new Messenger

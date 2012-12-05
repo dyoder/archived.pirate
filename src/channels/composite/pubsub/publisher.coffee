@@ -8,6 +8,9 @@ class Publisher extends Channel
 
     super configuration
     
+    {@fireAndForget} = configuration
+    @fireAndForget ?= false
+    
     @_subscription = new Subscription
       name: @name
       transport: @transport
@@ -29,6 +32,12 @@ class Publisher extends Channel
     message.id
     
 
+  envelope: (message) ->
+    message = super message
+    if @fireAndForget
+      message.replyRequested = false
+    message
+    
   _run: ->
     @_started = true
     _run = => @_results.receive()

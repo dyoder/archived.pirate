@@ -10,7 +10,6 @@ class PriorityQueue extends Channel
     @channelList = ("#{@name}.#{priority}" for priority in @priorities)
         
   enqueue: (message,priority) ->
-    
     message = @envelope message
     @transport.enqueue message
 

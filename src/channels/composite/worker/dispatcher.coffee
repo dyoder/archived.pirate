@@ -8,6 +8,9 @@ class Dispatcher extends Channel
 
     super configuration
     
+    {@fireAndForget} = configuration
+    @fireAndForget ?= false
+    
     @_tasks = new PriorityQueue
       name: @name
       transport: @transport
@@ -25,7 +28,7 @@ class Dispatcher extends Channel
     @_pending++
     message = @envelope message
     @_tasks.enqueue message
-    @_run() unless @_started
+    @_run() unless @fireAndForget or @_started
     message.id
     
 
@@ -33,6 +36,8 @@ class Dispatcher extends Channel
   envelope: (message) ->
     message = super message
     message.priority ?= 1
+    if @fireAndForget
+      message.replyRequested = false
     message
     
   _run: ->

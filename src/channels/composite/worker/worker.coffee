@@ -31,14 +31,15 @@ class Worker extends Channel
     @_tasks.bus.on "#{@name}.*.dequeue", (message) =>
 
       # Grab the channel and id from the message ...
-      {replyTo,id} = message
+      {replyRequested,replyTo,id} = message
 
-      # listen for the result event ...
-      # TODO: this will create a memory leak if there's no response
-      @bus.once "#{@name}.#{id}.result", (result) =>    
-        (@_messenger replyTo).send content: result, id: id
-        # TODO: what if there several outstanding listeners like this?
-        @_tasks.end() if @_stopped
+      if replyRequested
+        # listen for the result event ...
+        # TODO: this will create a memory leak if there's no response
+        @bus.once "#{@name}.#{id}.result", (result) =>    
+          (@_messenger replyTo).send content: result, id: id
+          # TODO: what if there several outstanding listeners like this?
+          @_tasks.end() if @_stopped
 
       # ... and generate a 'task' even, passing the message and result
       # function
