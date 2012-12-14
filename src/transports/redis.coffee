@@ -1,17 +1,14 @@
 redis = require "redis"
 {Pool} = require "generic-pool"
 Bus = require "node-bus"
-{type} = require "fairmont"
+{type,toError} = require "fairmont"
 
-# Error monad function
-mError = (thing) ->
-  if thing instanceof Error then thing else new Error thing.toString()
-    
 class Transport
   
   constructor: (configuration) ->
     {@timeout,@bus,debug} = configuration 
     @bus ?= new Bus
+    ch = @bus.channel "pool"
     @clients = Pool 
       name: "redis-transport", max: 10
       create: (callback) => 
@@ -20,94 +17,61 @@ class Transport
         client.on "error", (error) -> callback error
         client.on "connect", -> callback null, client
       destroy: (client) => client.quit()
-      log: (string,level) => @bus.event "transport.pool.#{level}", string
+      log: (string,level) => ch.send level, string
   
-  send: (message) ->
-    @_send message, "send"
+  send: (message) -> @_send message, "send"
     
-  receive: (channel) ->
-    @_receive channel, "receive"
+  receive: (channel) -> @_receive channel, "receive"
     
-  enqueue: (message) ->
-    @_send message, "enqueue"
+  enqueue: (message) -> @_send message, "enqueue"
     
-  dequeue: (channel) ->
-    @_receive channel, "dequeue"
+  dequeue: (channel) -> @_receive channel, "dequeue"
     
   _send: (message,verb) ->
-    console.log "TRANSPORT > SEND > REPLY TO", message.replyTo
-    {channel,id} = message
-    @_acquire (client) =>
-      client.lpush "#{channel}", JSON.stringify(message), (error,result) =>
-        unless error?
-          @clients.release client
-          @bus.event "#{channel}.#{id}.#{verb}"
-        else
-          @bus.event "#{channel}.#{id}.#{verb}.error", mError error
+    @bus.channel verb, (ch) =>
+      {channel,id} = message
+      @_acquire (client) =>
+        ch.once "*", => @clients.release client
+        client.lpush channel, JSON.stringify(message), ch.callback
         
   _receive: (channel,verb) ->
-    @_acquire (client) =>
-      channel = if (type channel) is "array" then channel else [ channel ]
-      client.brpop channel..., 0, (error,results) =>
-        unless error?
-          @clients.release client
-          try
-            [key,json] = results
-            message = JSON.parse(json)
-            {channel,id} = message
-            @bus.event "#{channel}.#{id}.#{verb}", message
-          catch error
-            @bus.event "#{channel}.#{verb}.error", mError error
-        else
-          @bus.event "#{channel}.#{verb}.error", mError error
+    @bus.channel verb, (ch) =>
+      @_acquire (client) =>
+        ch.once "*", => @clients.release client
+        channel = if (type channel) is "array" then channel else [ channel ]
+        client.brpop channel..., 0, ch.callback
+      ch.on "success", (results) =>
+        ch.safely =>
+          [key,json] = results
+          message = JSON.parse(json)
+          ch.send "message", message
 
   publish: (message) ->
-    {channel,id} = message
-    @_acquire (client) =>
-      client.publish channel, JSON.stringify(message), (error) =>
-        unless error?
-          @clients.release client
-          @bus.event "#{channel}.#{id}.publish", message
-        else
-          @bus.event "#{channel}.publish.error", mError error
-        
-    
-  subscribe: (channel) ->
-    _client = null
-    @_acquire (client) =>
-      _client = client
-      client.subscribe channel
-      client.on "message", (channel,json) =>
-        try
-          message = JSON.parse json
-          {id} = message
-          @bus.event "#{channel}.#{id}.message", message
-        catch error
-          @bus.event "#{channel}.subscribe.error", message
+    @bus.channel "publish", (ch) =>
+      {channel,id} = message
+      @_acquire (client) =>
+        ch.once "*", => @clients.release client
+        client.publish channel, JSON.stringify(message), ch.callback
           
-    # we return the unsubscribe function
-    =>
-      if _client?
-        _client.unsubscribe => @clients.release _client
-        @bus.event "#{channel}.unsubscribe"
-        
+  subscribe: (channel) ->
+    @bus.channel "subscribe", (ch) =>
+      @_acquire (client) =>
+        client.subscribe channel
+        client.on "message", (channel,json) =>
+          ch.safely =>
+            message = JSON.parse json
+            ch.send "message", message
+        ch.once "unsubscribe", =>
+          if client?
+            client.unsubscribe => @clients.release client
         
   _acquire: (handler) ->
-    # the try-catch is required because the pool library can throw exceptions as
-    # well as return them via the callback :/    
-    try 
-      @clients.acquire (error,client) =>
-        unless error?
-          handler client
-        else
-          @bus.event "transport.client.error", mError error
-    catch error
-      @bus.event "transport.client.error", mError error
+    @bus.channel "client", (ch) =>
+      ch.safely => @clients.acquire ch.callback
+      ch.on "success", handler
        
   _release: (client) -> @clients.release client
     
-  end: -> 
-    @clients.drain => @clients.destroyAllNow()
+  end: -> @clients.drain => @clients.destroyAllNow()
   
-
 module.exports = Transport

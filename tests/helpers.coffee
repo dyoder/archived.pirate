@@ -37,14 +37,6 @@ make = (Class,configuration={}) ->
 
 module.exports =
   make: make
-
-
-  # # TODO: We need a more coherent approach to this ...
-  
-  # The problem is that you can't really have this turned on in a multi-node
-  # (channel) with a shared event bus because stuff gets echoed by each node. So
-  # basically the same event keeps getting logged. I like the convenience of a
-  # simple debug option, but perhaps it belongs on the bus itself?
           
 
 
