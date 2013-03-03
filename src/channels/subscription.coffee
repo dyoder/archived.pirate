@@ -13,7 +13,7 @@ class Subscription extends Channel
       
   unsubscribe: -> 
     if @_unsubscribe
-      @_unsubscribe()
+      @_unsubscribe.emit "unsubscribe"
       @_unsubscribe = null
       
   end: ->

@@ -23,13 +23,23 @@ class Dispatcher extends Channel
     @_started = false
     @_stopped = false
     @_pending = 0
+    @_channels = {}
 
   request: (message) ->
-    @_pending++
     message = @envelope message
     @_tasks.enqueue message
-    @_run() unless @fireAndForget or @_started
-    message.id
+    if message.replyRequested
+      @_channels[message.id] = @bus.channel message.id
+
+
+    # The number of keys in the @_channels hash is == pending
+    @_pending++
+
+    # Since we add the replyRequested business to the message, we
+    # can just check the message. And we can call run just in case
+    # in the constructor
+    unless @fireAndForget
+      @_run() unless @_started
     
 
   # Default the priority to 1
@@ -42,15 +52,18 @@ class Dispatcher extends Channel
     
   _run: ->
     @_started = true
-    _run = => @_results.receive()
-    _run()
+
+    @_results.receive()
 
     # Remap receive events on our private channel to result
     # events on the dispatcher channel and check for next event
-    @_results.bus.on "#{@replyTo}.*.receive", (message) =>
+    @_results.bus.on "receive.message", (message) =>
       @_pending--
-      @bus.event "#{@name}.#{message.id}.result", message
-      process.nextTick _run unless @_stopped
+      # no reason we can't emit instead of send, since the 
+      # message itself is already async
+      @_channels[message.id].emit "result", message
+      delete @_channels[message.id]
+      process.nextTick (=> @_results.receive()) unless @_stopped
       if @_stopped and @_pending is 0
         @_tasks.end()
         @_results.end()

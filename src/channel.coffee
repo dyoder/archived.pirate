@@ -7,7 +7,7 @@ class Channel
     {@transport,@name,@replyTo,@bus,@timeout} = configuration
     @timeout ?= 60 * 1000 # 60 seconds in milliseconds
     @replyTo ?= randomKey 16
-    @bus ?= @transport.bus
+    @bus ?= @transport.bus.channel @name
     
   envelope: (message) ->
     unless message instanceof Object

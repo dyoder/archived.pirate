@@ -6,7 +6,7 @@ defaults =
   channel:
     name: "greetings"
 
-{w} = require "fairmont"
+{w,merge} = require "fairmont"
 Transport = require "../src/transports/redis"
 
 extend = (object, mixins...) ->
@@ -26,10 +26,10 @@ attachLogger = (node) ->
     else
       logger.info "#{event}"
 
-make = (Class,configuration={}) ->
-  configuration = extend {}, defaults.channel, configuration
+make = (klass,configuration={}) ->
+  configuration = merge defaults.channel, configuration
   configuration.transport = new Transport defaults.transport
-  node = new Class configuration
+  node = new klass configuration
   if defaults.debug?
     attachLogger node
   node

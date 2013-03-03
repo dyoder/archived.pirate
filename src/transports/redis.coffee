@@ -7,7 +7,7 @@ class Transport
   
   constructor: (configuration) ->
     {@timeout,@bus,debug} = configuration 
-    @bus ?= new Bus
+    @bus ?= new Bus name: "transport"
     ch = @bus.channel "pool"
     @clients = Pool 
       name: "redis-transport", max: 10
@@ -28,11 +28,11 @@ class Transport
   dequeue: (channel) -> @_receive channel, "dequeue"
     
   _send: (message,verb) ->
-    @bus.channel verb, (ch) =>
+    @bus.channel verb, (redisChannel) =>
       {channel,id} = message
       @_acquire (client) =>
-        ch.once "*", => @clients.release client
-        client.lpush channel, JSON.stringify(message), ch.callback
+        redisChannel.once "*", => @clients.release client
+        client.lpush channel, JSON.stringify(message), redisChannel.callback
         
   _receive: (channel,verb) ->
     @bus.channel verb, (ch) =>
@@ -67,7 +67,7 @@ class Transport
         
   _acquire: (handler) ->
     @bus.channel "client", (ch) =>
-      ch.safely => @clients.acquire ch.callback
+      @clients.acquire ch.callback
       ch.on "success", handler
        
   _release: (client) -> @clients.release client

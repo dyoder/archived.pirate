@@ -26,9 +26,9 @@ class Worker extends Channel
     @_started = true
 
     _run = => @_tasks.dequeue()
-    _run()
+    ch = _run()
 
-    @_tasks.bus.on "#{@name}.*.dequeue", (message) =>
+    @_tasks.bus.on "#{@name}.message", (message) =>
 
       # Grab the channel and id from the message ...
       {replyRequested,replyTo,id} = message
@@ -36,7 +36,7 @@ class Worker extends Channel
       if replyRequested
         # listen for the result event ...
         # TODO: this will create a memory leak if there's no response
-        @bus.once "#{@name}.#{id}.result", (result) =>    
+        ch "result", (result) =>    
           (@_messenger replyTo).send content: result, id: id
           # TODO: what if there several outstanding listeners like this?
           @_tasks.end() if @_stopped
